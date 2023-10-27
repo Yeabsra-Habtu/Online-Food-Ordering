@@ -9,7 +9,7 @@ interface VandorDoc extends Document{
     phone:string;
     email:string;
     password:string;
-    salt:String;
+    salt:string;
     serviceAvaliable:boolean;
     coverImage:[string];
     rating:number;
@@ -29,10 +29,10 @@ const VandorSchema=new Schema({
     serviceAvaliable:{type:Boolean},
     coverImage:[String],
     rating:{type:Number},
-    foods:{
+    foods:[{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'food'
-    }
+        ref:'Food'
+    }]
 },{
     toJSON:{
         transform(doc,ret){
@@ -46,5 +46,5 @@ const VandorSchema=new Schema({
     timestamps:true
 })
 
-const vandor = mongoose.model('Vandor',VandorSchema);
+const vandor = mongoose.model<VandorDoc>('Vandor',VandorSchema);
 export{vandor}

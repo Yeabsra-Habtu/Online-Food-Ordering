@@ -1,11 +1,28 @@
 import express from 'express'
-import {GetVandorProfile, UpdateVandorProfile, UpdateVandorService, VandorLogin } from '../controllers';
+import {CreateFood, GetFood, GetVandorProfile, UpdateVandorCoverImage, UpdateVandorProfile, UpdateVandorService, VandorLogin } from '../controllers';
 import { Authenticate } from '../middleware';
+import multer from "multer";
+import fs from 'fs'
+
+
 
 const router=express.Router();
 
+const imageStorage=multer.diskStorage({
+    destination: 'images',
+    filename:function(req,file,cb){
+        cb(null,file.originalname)
+    }
+})
+
+const images=multer({storage:imageStorage})
+router.use(Authenticate)
 router.post('/vandorLogin',VandorLogin)
-router.get('/profile',Authenticate,GetVandorProfile)
-router.patch('/profileUpdate',Authenticate,UpdateVandorProfile)
-router.patch('/serviceAvaliableUpdate',Authenticate,UpdateVandorService)
+router.get('/profile',GetVandorProfile)
+router.patch('/profileUpdate',UpdateVandorProfile)
+router.patch('/serviceAvaliableUpdate',UpdateVandorService)
+router.patch('/coverImageUpdate',images.array('images',10),UpdateVandorCoverImage)
+
+router.post('/createFood',images.array('images',10),CreateFood)
+router.get('/getFood',GetFood)
 export{router as VanorRoute}

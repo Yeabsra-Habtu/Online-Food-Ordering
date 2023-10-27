@@ -45,6 +45,7 @@ export const CreateVander = async (
     email: email,
     foodType: foodType,
     password: userPassword,
+    foods:[],
   });
   return res.json(createdVandor);
 };
