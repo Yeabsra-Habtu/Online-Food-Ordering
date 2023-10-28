@@ -1,30 +1,16 @@
 import express from 'express'
-import{AdminRoute,VanorRoute}from './routes'
-import bodyParser from 'body-parser';
-import mongoose from 'mongoose';
-import { MONGO_URI } from './config';
-import path from 'path'
+import Database from './services/Database'
+import App from './services/ExpressApp'
+import { PORT } from './config';
 
-const app=express();
+const StartServer=async()=>{
+    const app=express();
+    await Database();
+    await App(app);
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:true}))
-app.use('/images',express.static(path.join(__dirname,'images')))
+    app.listen(PORT,()=>{
+        console.log(`Server listening on port: ${PORT}`)
+    })
+}
 
-mongoose.connect(MONGO_URI).then(result=>{
-    console.log('DB connected')
-}).catch(err=>{
-    console.log(err.message)
-})
-
-app.use('/vandor',VanorRoute)
-app.use('/admin',AdminRoute)
-
-
-
-
-
-
-app.listen(8000,()=>{
-    console.log('Port on 8000')
-})
+StartServer();
