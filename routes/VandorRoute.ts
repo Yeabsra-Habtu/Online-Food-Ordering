@@ -16,8 +16,8 @@ const imageStorage=multer.diskStorage({
 })
 
 const images=multer({storage:imageStorage})
-router.use(Authenticate)
 router.post('/vandorLogin',VandorLogin)
+router.use(Authenticate)
 router.get('/profile',GetVandorProfile)
 router.patch('/profileUpdate',UpdateVandorProfile)
 router.patch('/serviceAvaliableUpdate',UpdateVandorService)

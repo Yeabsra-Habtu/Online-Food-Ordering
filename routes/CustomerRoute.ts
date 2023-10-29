@@ -7,9 +7,10 @@ import {
   GetCustomerProfile,
   RequestOtp,
 } from "../controllers";
+import { Authenticate } from "../middleware";
 
 const router = express.Router();
-
+router.use(Authenticate)
 //create/signup
 router.post("/signup", CustomerSignUp);
 //login
@@ -20,5 +21,5 @@ router.patch("/verify", CustomerVerify);
 router.get("/otp", RequestOtp);
 //profile
 router.get("/profile", GetCustomerProfile);
-router.patch("/profile", EditCustomerProfile);
+router.patch("/editProfile", EditCustomerProfile);
 export { router as CustomerRoute };
