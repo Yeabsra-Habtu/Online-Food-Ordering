@@ -2,7 +2,6 @@ import express from 'express'
 import {CreateFood, GetFood, GetVandorProfile, UpdateVandorCoverImage, UpdateVandorProfile, UpdateVandorService, VandorLogin } from '../controllers';
 import { Authenticate } from '../middleware';
 import multer from "multer";
-import fs from 'fs'
 
 
 

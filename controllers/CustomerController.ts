@@ -5,51 +5,59 @@ import { CreateCustomerInputs, CustomerLoginInput, EditCustomerProfileInput } fr
 import { GenerateOtp, GeneratePassword, GenerateSalt, GenerateSignature, SendOtp, ValidatePassword } from '../utility'
 import { Customer } from '../models'
 
-export const CustomerSignUp=async(req:Request,res:Response,next:NextFunction)=>{
-    const customerInputs=plainToClass(CreateCustomerInputs,req.body)
-    const inputErrors=await validate(customerInputs,{validationError:{target:true}})
+export const CustomerSignUp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const customerInputs = plainToClass(CreateCustomerInputs, req.body);
+        const inputErrors = await validate(customerInputs, { validationError: { target: true } });
 
-    if(inputErrors.length>0){
-        res.status(400).json(inputErrors)
+        if (inputErrors.length > 0) {
+            return res.status(400).json(inputErrors);
+        }
+
+        const { email, phone, password } = customerInputs;
+        const salt = await GenerateSalt();
+        const newPassword = await GeneratePassword(password, salt);
+        const { otp, expiry } = await GenerateOtp();
+
+        const existingCustomer = await Customer.findOne({ email: email });
+
+        if (existingCustomer !== null) {
+            return res.status(400).json({ message: 'Customer already exists with the provided email' });
+        }
+
+        const result = await Customer.create({
+            email: email,
+            phone: phone,
+            password: newPassword,
+            salt: salt,
+            otp: otp,
+            otp_expiry: expiry,
+            firstName: '',
+            lastName: '',
+            verified: false,
+            lat: 0,
+            lng: 0,
+        });
+
+        if (result) {
+            await SendOtp(otp, phone);
+
+            const signature = await GenerateSignature({
+                _id: result._id,
+                email: result.email,
+                verified: result.verified,
+            });
+
+            return res.status(201).json({ signature: signature, email: result.email, verified: result.verified });
+        } else {
+            return res.status(500).json({ message: "Error on signup" });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-    const {email,phone,password}=customerInputs
-    const salt=await GenerateSalt();
-    const newPassword=await GeneratePassword(password,salt)
-    const {otp,expiry}=await GenerateOtp();
+};
 
-    const existingCustomer=await Customer.findOne({email:email})
-    if(existingCustomer !== null){
-        return res.json({message:'Customer already exists with the provided email'})
-    }
-    const result=await Customer.create({
-        email:email,
-        phone:phone,
-        password:newPassword,
-        salt:salt,
-        otp:otp,
-        otp_expiry:expiry,
-        firstName:'',
-        lastName:'',
-        verified:false,
-        lat:0,
-        lng:0,
-    })
-
-    if(result){
-        await SendOtp(otp,phone)
-
-        const signature=await GenerateSignature({
-            _id:result._id,
-            email:result.email,
-            verified:result.verified
-        })
-        return res.status(201).json({signature:signature,email:result.email,verified:result.verified})
-
-    }else{
-        return res.status(500).json({message:"Error on signup"})
-    }
-    
-}
 export const CustomerLogin=async(req:Request,res:Response,next:NextFunction)=>{
     const customerInputs=plainToClass(CustomerLoginInput,req.body)
     const inputErrors=await validate(customerInputs,{validationError:{target:false}})
