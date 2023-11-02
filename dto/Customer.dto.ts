@@ -36,3 +36,8 @@ export interface CustomerPayloadInput{
     email:string;
     verified:boolean;
 }
+
+export class OrderInput{
+    _id:string;
+    unit:number;
+}
