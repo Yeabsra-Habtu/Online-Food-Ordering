@@ -10,8 +10,8 @@ import {
   GetAllOrders,
   GetOrderById,
   AddToCart,
-GetAll,
-GetCartById
+GetCart,
+DeleteCart
 } from "../controllers";
 import { Authenticate } from "../middleware";
 
@@ -33,8 +33,8 @@ router.patch("/editProfile", EditCustomerProfile);
 //cart
 
 router.post('/addToCart', AddToCart);
-router.get('/getAllCarts', GetAll)
-router.get('/getCartById/:id', GetCartById)
+router.get('/getCart', GetCart)
+router.get('/deleteCart', DeleteCart)
 //payment
 
 //order

@@ -1,5 +1,5 @@
 import express from 'express'
-import {CreateFood, GetFood, GetVandorProfile, UpdateVandorCoverImage, UpdateVandorProfile, UpdateVandorService, VandorLogin } from '../controllers';
+import {CreateFood, GetFood, GetVandorProfile, UpdateVandorCoverImage, UpdateVandorProfile, UpdateVandorService, VandorLogin,GetCurrentOrders,ProcessOrder,GetOrderDetails } from '../controllers';
 import { Authenticate } from '../middleware';
 import multer from "multer";
 
@@ -21,6 +21,11 @@ router.get('/profile',GetVandorProfile)
 router.patch('/profileUpdate',UpdateVandorProfile)
 router.patch('/serviceAvaliableUpdate',UpdateVandorService)
 router.patch('/coverImageUpdate',images.array('images',10),UpdateVandorCoverImage)
+
+//order
+router.get('/getOrders',GetCurrentOrders)
+router.patch('/processOrder/:id/process',ProcessOrder)
+router.get('/getOrder/:id',GetOrderDetails)
 
 router.post('/createFood',images.array('images',10),CreateFood)
 router.get('/getFood',GetFood)

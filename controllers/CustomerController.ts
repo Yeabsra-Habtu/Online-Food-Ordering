@@ -15,7 +15,7 @@ import {
   SendOtp,
   ValidatePassword,
 } from "../utility";
-import { Customer, Food, Order } from "../models";
+import { Customer, Food, Order, vandor } from "../models";
 
 export const CustomerSignUp = async (
   req: Request,
@@ -97,10 +97,9 @@ export const CustomerLogin = async (
     res.status(400).json(inputErrors);
   }
 
-
   const { email, password } = customerInputs;
   const customer = await Customer.findOne({ email: email });
-  console.log(customerInputs)
+  console.log(customerInputs);
   if (customer) {
     const validation = await ValidatePassword(
       password,
@@ -220,73 +219,87 @@ export const EditCustomerProfile = async (
 };
 
 //cart
-export const AddToCart = async (req: Request, res: Response, next: NextFunction) => {
+export const AddToCart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const customer = req.user;
 
-    const customer = req.user;
-    
-    if(customer){
+  if (customer) {
+    const profile = await Customer.findById(customer._id);
+    let cartItems = Array();
 
-        const profile = await Customer.findById(customer._id);
-        let cartItems = Array();
+    const { _id, unit } = <OrderInput>req.body;
 
-        const { _id, unit } = <OrderInput>req.body;
+    const food = await Food.findById(_id);
 
-        const food = await Food.findById(_id);
+    if (food) {
+      if (profile != null) {
+        cartItems = profile.cart;
 
-        if(food){
+        if (cartItems.length > 0) {
+          // check and update
+          let existFoodItems = cartItems.filter(
+            (item) => item.food._id.toString() === _id
+          );
+          if (existFoodItems.length > 0) {
+            const index = cartItems.indexOf(existFoodItems[0]);
 
-            if(profile != null){
-                cartItems = profile.cart;
-
-                if(cartItems.length > 0){
-                    // check and update
-                    let existFoodItems = cartItems.filter((item) => item.food._id.toString() === _id);
-                    if(existFoodItems.length > 0){
-                        
-                        const index = cartItems.indexOf(existFoodItems[0]);
-                        
-                        if(unit > 0){
-                            cartItems[index] = { food, unit };
-                        }else{
-                            cartItems.splice(index, 1);
-                        }
-
-                    }else{
-                        cartItems.push({ food, unit})
-                    }
-
-                }else{
-                    // add new Item
-                    cartItems.push({ food, unit });
-                }
-
-                if(cartItems){
-                    profile.cart = cartItems as any;
-                    const cartResult = await profile.save();
-                    return res.status(200).json(cartResult.cart);
-                }
-
+            if (unit > 0) {
+              cartItems[index] = { food, unit };
+            } else {
+              cartItems.splice(index, 1);
             }
+          } else {
+            cartItems.push({ food, unit });
+          }
+        } else {
+          // add new Item
+          cartItems.push({ food, unit });
         }
 
+        if (cartItems) {
+          profile.cart = cartItems as any;
+          const cartResult = await profile.save();
+          return res.status(200).json(cartResult.cart);
+        }
+      }
     }
+  }
 
-    return res.status(404).json({ msg: 'Unable to add to cart!'});
-}
-
-export const GetAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  
+  return res.status(404).json({ msg: "Unable to add to cart!" });
 };
-export const GetCartById = async (
+
+export const GetCart = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  
+  const customer = req.user;
+  if (customer) {
+    const profile = await Customer.findById(customer._id).populate("cart.food");
+    if (profile) {
+      return res.status(200).json(profile.cart);
+    }
+  }
+  return res.status(400).json("Cart Empty");
+};
+export const DeleteCart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const customer = req.user;
+  if (customer) {
+    const profile = await Customer.findById(customer._id);
+    if (profile) {
+      profile.cart = [] as any;
+      const cartResult = await profile.save();
+      return res.status(200).json(cartResult);
+    }
+  }
+  return res.status(400).json("Cart Already Empty");
 };
 //orders
 export const CreateOrder = async (
@@ -298,12 +311,14 @@ export const CreateOrder = async (
   if (customer) {
     const orderId = `${Math.floor(Math.random() * 89999) + 1000}`;
     const profile = await Customer.findById(customer._id);
-
-    const cart = <[OrderInput]>req.body;
+    if(profile){
+      const cart = <[OrderInput]>req.body;
 
     let cartItems = Array();
 
     let netAmount = 0.0;
+
+    let vandorId;
 
     const foods = await Food.find()
       .where("_id")
@@ -313,6 +328,8 @@ export const CreateOrder = async (
     foods.map((food) => {
       cart.map(({ _id, unit }) => {
         if (food._id == _id) {
+          vandorId = food.vandorId;
+          console.log(vandorId)
           netAmount += food.price * unit;
           cartItems.push({ food, unit });
         }
@@ -322,19 +339,28 @@ export const CreateOrder = async (
     if (cartItems) {
       const currentOrder = await Order.create({
         orderID: orderId,
+        vandorId: vandorId,
         items: cartItems,
         totalAmount: netAmount,
         orderDate: new Date(),
         paidThrough: "COD",
         paymentResponse: "",
         orderStatus: "waiting",
+        remark: "",
+        deliveryId: "",
+        appliedOffers: false,
+        offerId: "",
+        readyTime: 45
       });
+      profile.cart=[] as any
       if (currentOrder) {
-        profile?.orders.push(currentOrder);
-        await profile?.save();
-        return res.status(200).json(currentOrder);
+        profile.orders.push(currentOrder);
+        await profile.save();
+        return res.status(200).json(profile);
       }
     }
+    }
+    
   }
   return res.status(400).json({ message: "Error while creating order" });
 };
