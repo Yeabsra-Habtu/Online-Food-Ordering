@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { EditVandorInput, VandorLoginInput } from "../dto";
-import { Food, Order, vandor } from "../models";
+import { CreateOfferInput, EditVandorInput, VandorLoginInput } from "../dto";
+import { Food, Order, Vandor,Offer } from "../models";
 import { GenerateSignature, ValidatePassword } from "../utility";
 import { FindVandor } from "./AdminController";
 import { CreateFoodInput } from "../dto/Food.dto";
@@ -169,7 +169,6 @@ export const GetCurrentOrders = async (
   }
   return res.json("No order found");
 };
-
 export const ProcessOrder = async (
   req: Request,
   res: Response,
@@ -192,7 +191,6 @@ export const ProcessOrder = async (
   return res.json("Can't Process Order");
 
 };
-
 export const GetOrderDetails = async (
   req: Request,
   res: Response,
@@ -206,5 +204,103 @@ export const GetOrderDetails = async (
     }
   }
   return res.json("No order found");
+
+};
+export const AddOffer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user = req.user
+  if (user) {
+    const {bank,bins,description,endValidity,isActive,minValue,
+    offerAmount,offerType,pincode,promoCode,promoType,startValidity,title}=<CreateOfferInput>req.body
+    const vandor=await Vandor.findById(user._id)
+    if(vandor){
+      const offer=await Offer.create({
+        title:title,
+        description:description,
+        minValue:minValue,
+        offerAmount:offerAmount,
+        offerType:offerType,
+        startValidity:startValidity,
+        endValidity:endValidity,
+        promoCode:promoCode,
+        promoType:promoType,
+        bank:bank,
+        bins:bins,
+        pincode:pincode,
+        isActive:isActive,
+        vandors:[vandor]
+      })
+      console.log(offer)
+      return res.status(200).json(offer)
+    }
+  }
+  return res.json("Could not create offer. Please try again");
+
+};
+export const GetOffers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user=req.user
+  if(user){
+    let currentOffers=Array();
+    const offers=await Offer.find().populate('vandors')
+    if(offers){
+      offers.map(item=>{
+        if(item.vandors){
+          item.vandors.map(vandor=>{
+            if(vandor._id.toString()===user._id){
+              currentOffers.push(item)
+            }
+          })
+        }
+        console.log(currentOffers)
+        if(item.offerType=="GENERIC"){
+          currentOffers.push(item)
+        }
+      })
+    }
+    return res.status(200).json(currentOffers)
+  }
+  return res.json("No Offers Avaliable");
+
+};
+export const UpdateOffer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user=req.user
+  const offerId=req.params.id
+
+  if(user){
+    const {bank,bins,description,endValidity,isActive,minValue,
+      offerAmount,offerType,pincode,promoCode,promoType,startValidity,title}=<CreateOfferInput>req.body
+      const currentOffers=await Offer.findById(offerId);
+      if(currentOffers){
+        const vandor=await FindVandor(user._id)
+        if (vandor){
+          currentOffers.title=title;
+          currentOffers.description=description;
+          currentOffers.minValue=minValue;
+          currentOffers.offerAmount=offerAmount;
+          currentOffers.offerType=offerType;
+          currentOffers.startValidity=startValidity;
+          currentOffers.endValidity=endValidity;
+          currentOffers.promoCode=promoCode;
+          currentOffers.promoType=promoType;
+          currentOffers.bank=bank;
+          currentOffers.bins=bins;
+          currentOffers.pincode=pincode;
+          currentOffers.isActive=isActive;
+          const updatedOffer=await currentOffers.save();
+          return res.status(200).json(updatedOffer)
+        }
+      }
+  }
 
 };

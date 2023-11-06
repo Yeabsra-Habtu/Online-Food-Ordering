@@ -1,16 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import { CreateVandorInput, VandorLoginInput } from "../dto";
-import { vandor } from "../models";
-import { GeneratePassword, GenerateSalt, ValidatePassword } from "../utility";
+import { CreateVandorInput } from "../dto";
+import { Vandor } from "../models";
+import { GeneratePassword, GenerateSalt } from "../utility";
 
 export const FindVandor = async (id: string | undefined, email?: string) => {
   if (email) {
-    return await vandor.findOne({ email: email });
+    return await Vandor.findOne({ email: email });
   } else {
-    return await vandor.findById(id);
+    return await Vandor.findById(id);
   }
 };
-
 export const CreateVander = async (
   req: Request,
   res: Response,
@@ -32,7 +31,7 @@ export const CreateVander = async (
   }
   const salt = await GenerateSalt();
   const userPassword = await GeneratePassword(password, salt);
-  const createdVandor = await vandor.create({
+  const createdVandor = await Vandor.create({
     name: name,
     ownerName: ownerName,
     pincode: pincode,
@@ -46,13 +45,14 @@ export const CreateVander = async (
     foodType: foodType,
     password: userPassword,
     foods:[],
+    lat:0,
+    lng:0,
   });
   return res.json(createdVandor);
 };
-
 export const GetVandor = async (req: Request, res: Response, next: NextFunction) => {
 
-  const vendors = await vandor.find()
+  const vendors = await Vandor.find()
 
   if(vendors !== null){
       return res.json(vendors)
@@ -62,7 +62,6 @@ export const GetVandor = async (req: Request, res: Response, next: NextFunction)
   
 
 }
-
 export const GetVandorById = async (
   req: Request,
   res: Response,
@@ -75,4 +74,6 @@ export const GetVandorById = async (
   }
   return res.json("Vandor not found");
 };
+
+
 

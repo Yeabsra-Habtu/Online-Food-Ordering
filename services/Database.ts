@@ -6,7 +6,7 @@ export default async()=>{
         await mongoose.connect(MONGO_URI).then(result=>{
             console.log('DB connected')
         }).catch(err=>{
-            console.log(err.message)
+            console.log("DB connection failed due to: ",err.message)
         })
     } catch (error) {
         console.log(error)

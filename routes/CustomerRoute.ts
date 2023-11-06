@@ -11,7 +11,9 @@ import {
   GetOrderById,
   AddToCart,
 GetCart,
-DeleteCart
+DeleteCart,
+VerifyOffer,
+CreatePayment
 } from "../controllers";
 import { Authenticate } from "../middleware";
 
@@ -35,7 +37,12 @@ router.patch("/editProfile", EditCustomerProfile);
 router.post('/addToCart', AddToCart);
 router.get('/getCart', GetCart)
 router.get('/deleteCart', DeleteCart)
+
+//verify
+router.get('/offer/verify/:id',VerifyOffer)
+
 //payment
+router.post('/createPayment',CreatePayment)
 
 //order
 router.post('/createOrder',CreateOrder)

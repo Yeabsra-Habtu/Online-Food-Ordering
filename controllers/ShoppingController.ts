@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
-import { FoodDoc, vandor } from "../models";
+import { FoodDoc, Offer, Vandor } from "../models";
 
 export const GetFoodAvaliablity = async (
   req: Request,
@@ -7,7 +7,7 @@ export const GetFoodAvaliablity = async (
   next: NextFunction
 ) => {
   const { pincode } = req.params;
-  const result = await vandor
+  const result = await Vandor
     .find({ pincode: pincode, serviceAvaliable: false })
     .sort([["rating", "descending"]])
     .populate("foods");
@@ -18,14 +18,13 @@ export const GetFoodAvaliablity = async (
     return res.status(400).json("No Data Found");
   }
 };
-
 export const GetTopResturants = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const { pincode } = req.params;
-  const result = await vandor
+  const result = await Vandor
     .find({ pincode: pincode, serviceAvaliable: false })
     .sort([["rating", "descending"]])
     .limit(10);
@@ -36,14 +35,13 @@ export const GetTopResturants = async (
     return res.status(400).json("No Data Found");
   }
 };
-
 export const GetFoodsIn30Min = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const { pincode } = req.params;
-  const result = await vandor
+  const result = await Vandor
     .find({ pincode: pincode, serviceAvaliable: false })
     .populate("foods");
 
@@ -58,14 +56,13 @@ export const GetFoodsIn30Min = async (
     return res.status(400).json("No Data Found");
   }
 };
-
 export const SearchFoods = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const { pincode } = req.params;
-  const result = await vandor
+  const result = await Vandor
     .find({ pincode: pincode, serviceAvaliable: false })
     .populate("foods");
 
@@ -79,14 +76,24 @@ export const SearchFoods = async (
     return res.status(400).json("No Data Found");
   }
 };
+export const GetAvailableOffers=async(req:Request,res:Response,next:NextFunction)=>{
+  const pincode=req.params.pincode
+  if(pincode){
+    const offer=await Offer.find({pincode:pincode, isActive:true})
+    if(offer){
+      return res.status(200).json(offer)
+    }
+  }
+  return res.status(400).json("No Data Found");
 
+};
 export const GetResturantById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
     const { id } = req.params;
-  const result = await vandor
+  const result = await Vandor
     .findById(id)
     .populate("foods");
 
